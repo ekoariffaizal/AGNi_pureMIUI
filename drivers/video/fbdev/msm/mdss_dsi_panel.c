@@ -2956,15 +2956,12 @@ static int mdss_panel_parse_dt(struct device_node *np,
 
 //	rc = of_property_read_u32(np, "qcom,mdss-brightness-max-level", &tmp);
 //	pinfo->brightness_max = (!rc ? tmp : MDSS_MAX_BL_BRIGHTNESS);
-//#ifdef CONFIG_MACH_XIAOMI_AGNI_MIUI
 	pinfo->brightness_max = MDSS_MAX_BL_BRIGHTNESS_MIUI;
-//#else
-//	pinfo->brightness_max = MDSS_MAX_BL_BRIGHTNESS;
-//#endif
 	rc = of_property_read_u32(np, "qcom,mdss-dsi-bl-min-level", &tmp);
 	pinfo->bl_min = (!rc ? tmp : 0);
-	rc = of_property_read_u32(np, "qcom,mdss-dsi-bl-max-level", &tmp);
-	pinfo->bl_max = (!rc ? tmp : 255);
+//	rc = of_property_read_u32(np, "qcom,mdss-dsi-bl-max-level", &tmp);
+//	pinfo->bl_max = (!rc ? tmp : 255);
+	pinfo->bl_max = MDSS_MAX_BL_BRIGHTNESS_MIUI;
 	ctrl_pdata->bklt_max = pinfo->bl_max;
 
 	rc = of_property_read_u32(np, "qcom,mdss-dsi-interleave-mode", &tmp);
