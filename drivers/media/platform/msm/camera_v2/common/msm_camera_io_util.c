@@ -1,5 +1,4 @@
-/* Copyright (c) 2011-2014, 2017, 2019 The Linux Foundataion.
- * All rights reserved.
+/* Copyright (c) 2011-2014, 2017, The Linux Foundataion. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -365,13 +364,12 @@ int msm_cam_clk_enable(struct device *dev, struct msm_cam_clk_info *clk_info,
 		}
 	} else {
 		for (i = num_clk - 1; i >= 0; i--) {
-			if (!IS_ERR_OR_NULL(clk_ptr[i])) {
+			if (clk_ptr[i] != NULL) {
 				CDBG("%s disable %s\n", __func__,
 					clk_info[i].clk_name);
 				clk_disable(clk_ptr[i]);
 				clk_unprepare(clk_ptr[i]);
 				clk_put(clk_ptr[i]);
-				clk_ptr[i] = NULL;
 			}
 		}
 	}
@@ -385,11 +383,10 @@ cam_clk_set_err:
 	clk_put(clk_ptr[i]);
 cam_clk_get_err:
 	for (i--; i >= 0; i--) {
-		if (!IS_ERR_OR_NULL(clk_ptr[i])) {
+		if (clk_ptr[i] != NULL) {
 			clk_disable(clk_ptr[i]);
 			clk_unprepare(clk_ptr[i]);
 			clk_put(clk_ptr[i]);
-			clk_ptr[i] = NULL;
 		}
 	}
 	return rc;
@@ -580,7 +577,10 @@ disable_vreg:
 				continue;
 		} else
 			j = i;
+		
+		if (reg_ptr[j] != NULL) {
 		regulator_disable(reg_ptr[j]);
+		}
 		if (cam_vreg[j].delay > 20)
 			msleep(cam_vreg[j].delay);
 		else if (cam_vreg[j].delay)
