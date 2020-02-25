@@ -198,9 +198,9 @@ enum tsens_tm_trip_type {
 #define TSENS_TM_WRITABLE_TRIPS_MASK ((1 << TSENS_TM_TRIP_NUM) - 1)
 
 struct tsens_thrshld_state {
-	int				high_th_state;
-	int				low_th_state;
-	int				crit_th_state;
+	enum thermal_device_mode	high_th_state;
+	enum thermal_device_mode	low_th_state;
+	enum thermal_device_mode	crit_th_state;
 	unsigned int			high_adc_code;
 	unsigned int			low_adc_code;
 	int				high_temp;
@@ -2173,7 +2173,7 @@ static int get_device_tree_data(struct platform_device *pdev,
 		return -ENODEV;
 	}
 
-	if (tsens_slope_data && !tmdev->gain_offset_programmed) {
+	if (!tmdev->gain_offset_programmed) {
 		for (i = 0; i < tsens_num_sensors; i++)
 			tmdev->sensor[i].slope_mul_tsens_factor =
 							tsens_slope_data[i];
