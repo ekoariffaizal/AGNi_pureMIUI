@@ -860,7 +860,7 @@ static int qusb_phy_init(struct usb_phy *phy)
 		wmb();
 
 		/* Required to get PHY PLL lock successfully */
-		usleep_range(50000, 51000);
+		usleep_range(100, 110);
 	}
 
 	if (qphy->major_rev < 2) {
@@ -879,7 +879,6 @@ static int qusb_phy_init(struct usb_phy *phy)
 	if (pll_lock_fail) {
 		dev_err(phy->dev, "QUSB PHY PLL LOCK fails:%x\n", reg);
 		WARN_ON(1);
-		return -ETIMEDOUT;
 	}
 
 	return 0;
