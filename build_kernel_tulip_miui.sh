@@ -14,25 +14,25 @@ export SUBARCH=arm64
 mkdir -p /mnt/ANDROID/COMPILED_OUT
 
 echo ""
-echo " Cross-compiling AGNi Android 10 kernel whyred..."
+echo " Cross-compiling AGNi miui kernel tulip..."
 echo ""
 
 cd $KERNELDIR/
 
 if [ ! -f /mnt/ANDROID/COMPILED_OUT/.config ];
 then
-    make defconfig O=/mnt/ANDROID/COMPILED_OUT ARCH=arm64 agni_whyred-A10_defconfig
+    make defconfig O=/mnt/ANDROID/COMPILED_OUT ARCH=arm64 agni_tulip-miui_defconfig
 fi
 
 make -j12 O=/mnt/ANDROID/COMPILED_OUT ARCH=arm64
 
-rm -rf $KERNELDIR/BUILT_whyred-A10
-mkdir -p $KERNELDIR/BUILT_whyred-A10
+rm -rf $KERNELDIR/BUILT_tulip-miui
+mkdir -p $KERNELDIR/BUILT_tulip-miui
 
-#find -name '*.ko' -exec mv -v {} $KERNELDIR/BUILT_whyred-A10/system/lib/modules \;
+#find -name '*.ko' -exec mv -v {} $KERNELDIR/BUILT_tulip-miui/system/lib/modules \;
 
-mv /mnt/ANDROID/COMPILED_OUT/arch/arm64/boot/Image.*-dtb $KERNELDIR/BUILT_whyred-A10/
+mv /mnt/ANDROID/COMPILED_OUT/arch/arm64/boot/Image.*-dtb $KERNELDIR/BUILT_tulip-miui/
 
 echo ""
-echo "AGNi Android 10 has been built for whyred !!!"
+echo "AGNi miui has been built for tulip !!!"
 

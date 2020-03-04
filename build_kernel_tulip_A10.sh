@@ -4,9 +4,9 @@ if [ -f ~/WORKING_DIRECTORY/AGNi_stamp.sh ];
 	then
 	. ~/WORKING_DIRECTORY/AGNi_stamp.sh
 fi
-if [ -f ~/WORKING_DIRECTORY/gcc-7.5.0_linaro_aarch64.sh ];
+if [ -f ~/WORKING_DIRECTORY/gcc-8.x-uber_aarch64.sh ];
 	then
-	. ~/WORKING_DIRECTORY/gcc-7.5.0_linaro_aarch64.sh
+	. ~/WORKING_DIRECTORY/gcc-8.x-uber_aarch64.sh
 fi
 
 export ARCH=arm64
