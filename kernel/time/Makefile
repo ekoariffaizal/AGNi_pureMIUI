@@ -1,6 +1,11 @@
 obj-y += time.o timer.o hrtimer.o itimer.o posix-timers.o posix-cpu-timers.o
 obj-y += timekeeping.o ntp.o clocksource.o jiffies.o timer_list.o
-obj-y += timeconv.o timecounter.o posix-clock.o alarmtimer.o
+obj-y += timeconv.o timecounter.o posix-clock.o
+ifeq ($(CONFIG_AGNI_ANDROID_9),y)
+obj-y += alarmtimer_pie.o
+else
+obj-y += alarmtimer.o
+endif
 
 obj-$(CONFIG_GENERIC_CLOCKEVENTS)		+= clockevents.o tick-common.o
 ifeq ($(CONFIG_GENERIC_CLOCKEVENTS_BROADCAST),y)
@@ -13,3 +18,5 @@ obj-$(CONFIG_DEBUG_FS)				+= timekeeping_debug.o
 obj-$(CONFIG_TEST_UDELAY)			+= test_udelay.o
 
 ccflags-y += -Idrivers/cpuidle
+
+
