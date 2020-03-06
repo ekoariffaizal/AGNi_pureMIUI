@@ -76,7 +76,7 @@
 
 //Easily enable sRGB with module param
 //Part of the sRGB reset fix!
-int srgb_enabled = 0;
+int srgb_enabled = 1;
 module_param(srgb_enabled, int, 0644);
 
 #define MAX_FBI_LIST 32
@@ -2799,6 +2799,8 @@ static int mdss_fb_blank_unblank(struct msm_fb_data_type *mfd)
     cabc_resume = false;
     srgb_resume = false;
     gamma_resume = false;
+    cabc_movie_resume = false;
+    cabc_still_resume = false;
 error:
 	return ret;
 }
@@ -2887,6 +2889,8 @@ static int mdss_fb_blank_sub(int blank_mode, struct fb_info *info,
         cabc_resume = true;
         srgb_resume = true;
         gamma_resume = true;
+		cabc_movie_resume = true;
+		cabc_still_resume = true;
 		printk("%s:blank powerdown called\n",__func__);
 		ret = mdss_fb_blank_blank(mfd, req_power_state);
 		break;
