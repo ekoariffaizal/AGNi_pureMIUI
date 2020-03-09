@@ -31,8 +31,8 @@ ifeq ($(KERNEL_BUILD),1)
 	# These are provided in external module based builds
 	# Need to explicitly define for Kernel-based builds
 	MODNAME := wlan
-	WLAN_ROOT := drivers/staging/qcacld-3.0
-	WLAN_COMMON_ROOT := ../qca-wifi-host-cmn
+	WLAN_ROOT := drivers/staging/qcacld-3.0_pie
+	WLAN_COMMON_ROOT := ../qca-wifi-host-cmn_pie
 	WLAN_COMMON_INC := $(WLAN_ROOT)/$(WLAN_COMMON_ROOT)
 endif
 
@@ -284,7 +284,7 @@ ifeq ($(CONFIG_DEBUG_FS), y)
 endif
 
 # If not set, assume, Common driver is with in the build tree
-WLAN_COMMON_ROOT ?= ../qca-wifi-host-cmn
+WLAN_COMMON_ROOT ?= ../qca-wifi-host-cmn_pie
 WLAN_COMMON_INC ?= $(WLAN_ROOT)/$(WLAN_COMMON_ROOT)
 
 ifeq ($(KERNEL_BUILD), 0)
@@ -1193,7 +1193,7 @@ ifeq ($(CONFIG_PLD_USB_CNSS), y)
 PLD_OBJS +=	$(PLD_SRC_DIR)/pld_usb.o
 endif
 
-TARGET_INC := -I$(WLAN_ROOT)/../fw-api/fw
+TARGET_INC := -I$(WLAN_ROOT)/../fw-api_pie/fw
 TARGET_IF_INC := -I$(WLAN_COMMON_INC)/target_if/core/inc
 
 LINUX_INC :=	-Iinclude
