@@ -841,6 +841,9 @@ static int rradc_check_status_ready_with_retry(struct rradc_chip *chip,
 		if (retry_cnt >= FG_RR_CONV_MAX_RETRY_CNT)
 			rc = -ENODATA;
 	}
+#else
+	if (retry_cnt >= FG_RR_CONV_MAX_RETRY_CNT)
+		rc = -ENODATA;
 #endif
 	return rc;
 }
