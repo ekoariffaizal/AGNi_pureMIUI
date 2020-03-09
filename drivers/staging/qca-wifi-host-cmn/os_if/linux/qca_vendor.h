@@ -334,6 +334,17 @@
  *
  *	All the attributes used with this command are defined in
  *	enum qca_wlan_vendor_attr_beacon_reporting_params.
+ * @QCA_NL80211_VENDOR_SUBCMD_OEM_DATA: This command is used to send OEM data
+ *	binary blobs from application/service to firmware. The attributes
+ *	defined in enum qca_wlan_vendor_attr_oem_data_params are used to
+ *	deliver the parameters.
+ * @QCA_NL80211_VENDOR_SUBCMD_REQUEST_SAR_LIMITS_EVENT: This acts as an event.
+ *	Host drivers can request the user space entity to set the SAR power
+ *	limits with this event. Accordingly, the user space entity is expected
+ *	to set the SAR power limits. Host drivers can retry this event to the
+ *	user space for the SAR power limits configuration from user space. If
+ *	the driver does not get the SAR power limits from user space for all
+ *	the retried attempts, it can configure a default SAR power limit.
  */
 
 enum qca_nl80211_vendor_subcmds {
@@ -546,6 +557,8 @@ enum qca_nl80211_vendor_subcmds {
 	QCA_NL80211_VENDOR_SUBCMD_PEER_STATS_CACHE_FLUSH = 178,
 	QCA_NL80211_VENDOR_SUBCMD_MPTA_HELPER_CONFIG = 179,
 	QCA_NL80211_VENDOR_SUBCMD_BEACON_REPORTING = 180,
+	QCA_NL80211_VENDOR_SUBCMD_OEM_DATA = 182,
+	QCA_NL80211_VENDOR_SUBCMD_GET_SAR_LIMITS_EVENT = 187,
 };
 
 enum qca_wlan_vendor_tos {
@@ -890,6 +903,7 @@ enum qca_wlan_vendor_attr_get_station_info {
  * @QCA_NL80211_VENDOR_SUBCMD_HANG_REASON_INDEX: hang event reason index
  * @QCA_NL80211_VENDOR_SUBCMD_WLAN_MAC_INFO_INDEX: MAC mode info index
  * @QCA_NL80211_VENDOR_SUBCMD_BEACON_REPORTING_INDEX: Beacon reporting index
+ * @QCA_NL80211_VENDOR_SUBCMD_REQUEST_SAR_LIMITS_INDEX: Request SAR limit index
  */
 
 enum qca_nl80211_vendor_subcmds_index {
@@ -976,6 +990,8 @@ enum qca_nl80211_vendor_subcmds_index {
 	QCA_NL80211_VENDOR_SUBCMD_THROUGHPUT_CHANGE_EVENT_INDEX,
 	QCA_NL80211_VENDOR_SUBCMD_BEACON_REPORTING_INDEX,
 	QCA_NL80211_VENDOR_SUBCMD_ROAM_INDEX,
+	QCA_NL80211_VENDOR_SUBCMD_OEM_DATA_INDEX,
+	QCA_NL80211_VENDOR_SUBCMD_REQUEST_SAR_LIMITS_INDEX,
 };
 
 /**
@@ -7135,4 +7151,22 @@ enum qca_wlan_vendor_attr_beacon_reporting_params {
 		QCA_WLAN_VENDOR_ATTR_BEACON_REPORTING_LAST - 1
 };
 
+/*
+ * enum qca_wlan_vendor_attr_oem_data_params - Used by the vendor command
+ * QCA_NL80211_VENDOR_SUBCMD_OEM_DATA.
+ *
+ * @QCA_WLAN_VENDOR_ATTR_OEM_DATA_CMD_DATA: The binary blob for the vendor
+ * command QCA_NL80211_VENDOR_SUBCMD_OEM_DATA are carried through this
+ * attribute.
+ * NLA_BINARY attribute, the max size is 1024 bytes.
+ */
+enum qca_wlan_vendor_attr_oem_data_params {
+	QCA_WLAN_VENDOR_ATTR_OEM_DATA_INVALID = 0,
+	QCA_WLAN_VENDOR_ATTR_OEM_DATA_CMD_DATA = 1,
+
+	/* keep last */
+	QCA_WLAN_VENDOR_ATTR_OEM_DATA_PARAMS_AFTER_LAST,
+	QCA_WLAN_VENDOR_ATTR_OEM_DATA_PARAMS_MAX =
+		QCA_WLAN_VENDOR_ATTR_OEM_DATA_PARAMS_AFTER_LAST - 1
+};
 #endif

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -136,6 +136,28 @@ typedef uint8_t tSirVersionString[SIR_VERSION_STRING_LEN];
 #define SIR_UAPSD_FLAG_ACBE     (1 << SIR_UAPSD_BITOFFSET_ACBE)
 #define SIR_UAPSD_GET(ac, mask)      (((mask) & (SIR_UAPSD_FLAG_ ## ac)) >> SIR_UAPSD_BITOFFSET_ ## ac)
 
+/* Roam debugging related macro defines */
+#define MAX_ROAM_DEBUG_BUF_SIZE    250
+#define MAX_ROAM_EVENTS_SUPPORTED  5
+#define ROAM_FAILURE_BUF_SIZE      40
+#define TIME_STRING_LEN            24
+
+#define ROAM_CHANNEL_BUF_SIZE      300
+#define LINE_STR "========================================="
+
+/**
+ * struct mlme_roam_debug_info - Roam debug information storage structure.
+ * @trigger:            Roam trigger related data
+ * @scan:               Roam scan related data structure.
+ * @result:             Roam result parameters.
+ * @data_11kv:          Neighbor report/BTM parameters.
+ */
+struct mlme_roam_debug_info {
+       struct wmi_roam_trigger_info trigger;
+       struct wmi_roam_scan_data scan;
+       struct wmi_roam_result result;
+       struct wmi_neighbor_report_data data_11kv;
+};
 #endif
 
 /*
@@ -144,6 +166,8 @@ typedef uint8_t tSirVersionString[SIR_VERSION_STRING_LEN];
 #define AKM_FT_SAE           0
 #define AKM_FT_SUITEB_SHA384 1
 #define AKM_FT_FILS          2
+#define AKM_SAE              3
+#define AKM_OWE              4
 
 /**
  * enum sir_roam_op_code - Operation to be done by the callback.
@@ -228,6 +252,7 @@ struct wlan_mlme_chain_cfg {
 
 /**
  * struct wlan_beacon_report - Beacon info to be send to userspace
+ * @vdev_id: vdev id
  * @ssid: ssid present in beacon
  * @bssid: bssid present in beacon
  * @frequency: channel frequency in MHz
@@ -236,6 +261,7 @@ struct wlan_mlme_chain_cfg {
  * @boot_time: Boot time when beacon received
  */
 struct wlan_beacon_report {
+	uint8_t vdev_id;
 	struct wlan_ssid ssid;
 	struct qdf_mac_addr bssid;
 	uint32_t frequency;
@@ -452,10 +478,16 @@ typedef struct sSirSmeReadyReq {
 	uint16_t length;
 	uint16_t transactionId;
 	void *csr_roam_synch_cb;
+	QDF_STATUS (*csr_roam_auth_event_handle_cb)(tpAniSirGlobal mac,
+						    uint8_t vdev_id,
+						    struct qdf_mac_addr bssid);
 	void *pe_roam_synch_cb;
 	void *stop_roaming_cb;
 	QDF_STATUS (*sme_msg_cb)(tpAniSirGlobal mac,
 				 struct scheduler_msg *msg);
+	QDF_STATUS (*pe_disconnect_cb) (tpAniSirGlobal mac,
+					uint8_t vdev_id);
+	void *csr_roam_pmkid_req_cb;
 } tSirSmeReadyReq, *tpSirSmeReadyReq;
 
 /**
@@ -769,6 +801,7 @@ struct bss_description {
 	uint8_t WscIeProbeRsp[WSCIE_PROBE_RSP_LEN];
 	uint8_t reservedPadding4;
 	uint32_t tsf_delta;
+	uint32_t adaptive_11r_ap;
 #ifdef WLAN_FEATURE_FILS_SK
 	struct fils_ind_elements fils_info_element;
 #endif
@@ -1088,6 +1121,7 @@ typedef struct sSirSmeJoinReq {
 #endif
 
 	bool is11Rconnection;
+	bool is_adaptive_11r_connection;
 #ifdef FEATURE_WLAN_ESE
 	bool isESEFeatureIniEnabled;
 	bool isESEconnection;
@@ -2685,12 +2719,12 @@ typedef struct {
 	uint32_t authentication;
 	uint8_t encryption;
 	uint8_t mcencryption;
+	tAniEdType gp_mgmt_cipher_suite;
 	uint8_t ChannelCount;
 	uint8_t ChannelCache[SIR_ROAM_MAX_CHANNELS];
 #ifdef WLAN_FEATURE_11W
 	bool mfp_enabled;
 #endif
-
 } tSirRoamNetworkType;
 
 typedef struct SirMobilityDomainInfo {
@@ -2791,6 +2825,7 @@ struct roam_ext_params {
  * @pcl_weightage: PCL weightage
  * @channel_congestion_weightage: channel congestion weightage
  * @oce_wan_weightage: OCE WAN metrics weightage
+ * @vendor_roam_score_algorithm: Preferred vendor roam score algorithm
  */
 struct  sir_weight_config {
 	uint8_t rssi_weightage;
@@ -2804,6 +2839,7 @@ struct  sir_weight_config {
 	uint8_t pcl_weightage;
 	uint8_t channel_congestion_weightage;
 	uint8_t oce_wan_weightage;
+	uint32_t vendor_roam_score_algorithm;
 };
 
 struct sir_rssi_cfg_score  {
@@ -2864,6 +2900,7 @@ struct sir_score_config {
 	uint32_t band_weight_per_index;
 	uint32_t roam_score_delta;
 	uint32_t roam_score_delta_bitmap;
+	uint32_t cand_min_roam_score_delta;
 };
 
 /**
@@ -2970,6 +3007,10 @@ typedef struct sSirRoamOffloadScanReq {
 	struct pmkid_mode_bits pmkid_modes;
 	uint32_t roam_preauth_retry_count;
 	uint32_t roam_preauth_no_ack_timeout;
+
+	/* Idle/Disconnect roam parameters */
+	struct wmi_idle_roam_params idle_roam_params;
+	struct wmi_disconnect_roam_params disconnect_roam_params;
 #endif
 	struct roam_ext_params roam_params;
 	uint8_t  middle_of_roaming;
@@ -2994,6 +3035,7 @@ typedef struct sSirRoamOffloadScanReq {
 	uint32_t btm_sticky_time;
 	uint32_t rct_validity_timer;
 	uint32_t disassoc_timer_threshold;
+	uint32_t btm_trig_min_candidate_score;
 	struct wmi_11k_offload_params offload_11k_params;
 	uint32_t ho_delay_for_rx;
 	uint32_t min_delay_btw_roam_scans;
@@ -3003,7 +3045,13 @@ typedef struct sSirRoamOffloadScanReq {
 	bool bss_load_trig_enabled;
 	struct wmi_bss_load_config bss_load_config;
 	bool roaming_scan_policy;
+	uint32_t roam_scan_inactivity_time;
+	uint32_t roam_inactive_data_packet_count;
+	uint32_t roam_scan_period_after_inactivity;
 	uint32_t full_roam_scan_period;
+	struct roam_trigger_min_rssi min_rssi_params[NUM_OF_ROAM_TRIGGERS];
+	struct roam_trigger_score_delta score_delta_param[NUM_OF_ROAM_TRIGGERS];
+	bool is_adaptive_11r_connection;
 } tSirRoamOffloadScanReq, *tpSirRoamOffloadScanReq;
 
 typedef struct sSirRoamOffloadScanRsp {

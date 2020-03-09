@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -536,6 +536,11 @@ static QDF_STATUS p2p_populate_mac_header(
 	psoc = tx_ctx->p2p_soc_obj->soc;
 
 	wh = (struct wlan_frame_hdr *)tx_ctx->buf;
+	/*
+	 * Remove the WEP bit if already set, p2p_populate_rmf_field will set it
+	 * if required.
+	 */
+	wh->i_fc[1] &= ~IEEE80211_FC1_WEP;
 	mac_addr = wh->i_addr1;
 	pdev_id = wlan_get_pdev_id_from_vdev_id(psoc, tx_ctx->vdev_id,
 						WLAN_P2P_ID);
@@ -767,7 +772,7 @@ static QDF_STATUS p2p_tx_update_connection_status(
 
 	if (tx_frame_info->public_action_type !=
 		P2P_PUBLIC_ACTION_NOT_SUPPORT)
-		p2p_info("%s ---> OTA to " QDF_MAC_ADDR_STR,
+		p2p_debug("%s ---> OTA to " QDF_MAC_ADDR_STR,
 			  p2p_get_frame_type_str(tx_frame_info),
 			  QDF_MAC_ADDR_ARRAY(mac_to));
 
@@ -775,13 +780,13 @@ static QDF_STATUS p2p_tx_update_connection_status(
 	     P2P_PUBLIC_ACTION_PROV_DIS_REQ) &&
 	    (p2p_soc_obj->connection_status == P2P_NOT_ACTIVE)) {
 		p2p_soc_obj->connection_status = P2P_GO_NEG_PROCESS;
-		p2p_info("[P2P State]Inactive state to GO negotiation progress state");
+		p2p_debug("[P2P State]Inactive state to GO negotiation progress state");
 	} else if ((tx_frame_info->public_action_type ==
 		    P2P_PUBLIC_ACTION_NEG_CNF) &&
 		   (p2p_soc_obj->connection_status ==
 		    P2P_GO_NEG_PROCESS)) {
 		p2p_soc_obj->connection_status = P2P_GO_NEG_COMPLETED;
-		p2p_info("[P2P State]GO nego progress to GO nego completed state");
+		p2p_debug("[P2P State]GO nego progress to GO nego completed state");
 	}
 
 	return QDF_STATUS_SUCCESS;
@@ -1497,6 +1502,7 @@ static QDF_STATUS p2p_populate_rmf_field(struct tx_action_context *tx_ctx,
 	uint8_t *frame;
 	uint32_t frame_len;
 	struct p2p_soc_priv_obj *p2p_soc_obj;
+	uint8_t action_category;
 
 	p2p_soc_obj = tx_ctx->p2p_soc_obj;
 
@@ -1511,8 +1517,14 @@ static QDF_STATUS p2p_populate_rmf_field(struct tx_action_context *tx_ctx,
 	wh = (struct wlan_frame_hdr *)(*ppbuf);
 	action_hdr = (struct action_frm_hdr *)(*ppbuf + sizeof(*wh));
 
-	if (!is_rmf_mgmt_action_frame(action_hdr->action_category)) {
-		p2p_debug("non rmf act frame 0x%x cat %x",
+	/*
+	 * For Action frame which are not handled, the resp is sent back to the
+	 * source without change, except that MSB of the Category set to 1, so
+	 * to get the actual action category we need to ignore the MSB.
+	 */
+	action_category = action_hdr->action_category & 0x7f;
+	if (!is_rmf_mgmt_action_frame(action_category)) {
+		p2p_debug("non rmf act frame 0x%x category %x",
 			  tx_ctx->frame_info.sub_type,
 			  action_hdr->action_category);
 		return QDF_STATUS_SUCCESS;

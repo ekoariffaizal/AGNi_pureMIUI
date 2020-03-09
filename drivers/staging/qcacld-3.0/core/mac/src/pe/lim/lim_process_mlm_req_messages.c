@@ -636,11 +636,8 @@ static void lim_post_join_set_link_state_callback(tpAniSirGlobal mac,
 	}
 
 	qdf_mem_free(session_cb_param);
-	pe_debug("Sessionid %d set link state(%d) cb status: %d",
-			session_entry->peSessionId, session_entry->limMlmState,
-			status);
-
 	if (!status) {
+
 		pe_err("failed to find pe session for session id:%d",
 			session_entry->peSessionId);
 		goto failure;
@@ -655,12 +652,6 @@ static void lim_post_join_set_link_state_callback(tpAniSirGlobal mac,
 	session_entry->channelChangeReasonCode =
 			 LIM_SWITCH_CHANNEL_JOIN;
 	session_entry->pLimMlmReassocRetryReq = NULL;
-	pe_debug("[lim_process_mlm_join_req]: suspend link success(%d) "
-		"on sessionid: %d setting channel to: %d with ch_width :%d "
-		"and maxtxPower: %d", status, session_entry->peSessionId,
-		session_entry->currentOperChannel,
-		session_entry->ch_width,
-		session_entry->maxTxPower);
 	lim_set_channel(mac, session_entry->currentOperChannel,
 		session_entry->ch_center_freq_seg0,
 		session_entry->ch_center_freq_seg1,
@@ -717,9 +708,6 @@ lim_process_mlm_post_join_suspend_link(tpAniSirGlobal mac_ctx,
 		session->peSessionId;
 
 	lnk_state = eSIR_LINK_PREASSOC_STATE;
-	pe_debug("[lim_process_mlm_join_req]: lnk_state: %d",
-		lnk_state);
-
 	pe_session_param = qdf_mem_malloc(sizeof(struct session_params));
 	if (pe_session_param) {
 		pe_session_param->session_id = session->peSessionId;
@@ -803,27 +791,8 @@ static void lim_process_mlm_join_req(tpAniSirGlobal mac_ctx, uint32_t *msg)
 		/* Hold onto Join request parameters */
 
 		session->pLimMlmJoinReq = (tpLimMlmJoinReq) msg;
-		if (is_lim_session_off_channel(mac_ctx, sessionid)) {
-			pe_debug("SessionId:%d LimSession is on OffChannel",
-				sessionid);
-			/* suspend link */
-			pe_debug("Suspend link, sessionid %d is off channel",
-				sessionid);
-			lim_process_mlm_post_join_suspend_link(mac_ctx,
+		lim_process_mlm_post_join_suspend_link(mac_ctx,
 				QDF_STATUS_SUCCESS, (uint32_t *)session);
-		} else {
-			pe_debug("No need to Suspend link");
-			 /*
-			  * No need to Suspend link as LimSession is not
-			  * off channel, calling
-			  * lim_process_mlm_post_join_suspend_link with
-			  * status as SUCCESS.
-			  */
-			pe_debug("SessionId:%d Join req on current chan",
-				sessionid);
-			lim_process_mlm_post_join_suspend_link(mac_ctx,
-				QDF_STATUS_SUCCESS, (uint32_t *)session);
-		}
 		return;
 	} else {
 		/**
@@ -1045,12 +1014,11 @@ static void lim_process_mlm_auth_req(tpAniSirGlobal mac_ctx, uint32_t *msg)
 		return;
 	}
 
-	pe_debug("Process Auth Req sessionID %d Systemrole %d"
-		       "mlmstate %d from: " MAC_ADDRESS_STR
-		       " with authtype %d", session_id,
-		GET_LIM_SYSTEM_ROLE(session), session->limMlmState,
-		MAC_ADDR_ARRAY(mac_ctx->lim.gpLimMlmAuthReq->peerMacAddr),
-		mac_ctx->lim.gpLimMlmAuthReq->authType);
+	pe_debug("vdev %d Systemrole %d mlmstate %d from: " QDF_MAC_ADDR_STR "with authtype %d",
+		 session->smeSessionId, GET_LIM_SYSTEM_ROLE(session),
+		 session->limMlmState,
+		 QDF_MAC_ADDR_ARRAY(mac_ctx->lim.gpLimMlmAuthReq->peerMacAddr),
+		 mac_ctx->lim.gpLimMlmAuthReq->authType);
 
 	sir_copy_mac_addr(curr_bssid, session->bssId);
 
@@ -1249,8 +1217,7 @@ static void lim_process_mlm_assoc_req(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 	MTRACE(mac_trace(mac_ctx, TRACE_CODE_MLM_STATE,
 			 session_entry->peSessionId,
 			 session_entry->limMlmState));
-	pe_debug("SessionId:%d Sending Assoc_Req Frame",
-		session_entry->peSessionId);
+	pe_debug("vdev %d Sending Assoc_Req Frame", session_entry->smeSessionId);
 
 	/* Prepare and send Association request frame */
 	lim_send_assoc_req_mgmt_frame(mac_ctx, mlm_assoc_req, session_entry);
@@ -2224,47 +2191,53 @@ static void lim_process_periodic_join_probe_req_timer(tpAniSirGlobal mac_ctx)
 }
 
 /**
- * lim_process_auth_retry_timer()- function to Retry Auth
+ * lim_process_auth_retry_timer()- function to Retry Auth when auth timeout
+ * occurs
  * @mac_ctx:pointer to global mac
  *
  * Return: void
  */
-
 static void lim_process_auth_retry_timer(tpAniSirGlobal mac_ctx)
 {
-	tpPESession  session_entry;
+	tpPESession session_entry;
+	tAniAuthType auth_type;
+	tLimTimers *lim_timers = &mac_ctx->lim.limTimers;
+	uint16_t vdev_id =
+		lim_timers->g_lim_periodic_auth_retry_timer.sessionId;
 
-	session_entry =
-	  pe_find_session_by_session_id(mac_ctx,
-	  mac_ctx->lim.limTimers.g_lim_periodic_auth_retry_timer.sessionId);
+	session_entry = pe_find_session_by_session_id(mac_ctx, vdev_id);
+
 	if (NULL == session_entry) {
-		pe_err("session does not exist for given SessionId: %d",
-		  mac_ctx->lim.limTimers.
-			g_lim_periodic_auth_retry_timer.sessionId);
+		pe_err("session does not exist for vdev_id: %d", vdev_id);
 		return;
 	}
 
 	if (tx_timer_running(&mac_ctx->lim.limTimers.gLimAuthFailureTimer) &&
-	     (session_entry->limMlmState == eLIM_MLM_WT_AUTH_FRAME2_STATE) &&
-	     (LIM_AUTH_ACK_RCD_SUCCESS != mac_ctx->auth_ack_status)) {
+	    (session_entry->limMlmState == eLIM_MLM_WT_AUTH_FRAME2_STATE) &&
+	    (LIM_AUTH_ACK_RCD_SUCCESS != mac_ctx->auth_ack_status)) {
 		tSirMacAuthFrameBody    auth_frame;
-
 		/*
 		 * Send the auth retry only in case we have received ack failure
 		 * else just restart the retry timer.
 		 */
-		if (LIM_AUTH_ACK_RCD_FAILURE == mac_ctx->auth_ack_status) {
+		if (LIM_AUTH_ACK_RCD_FAILURE == mac_ctx->auth_ack_status &&
+		    mac_ctx->lim.gpLimMlmAuthReq) {
+			auth_type = mac_ctx->lim.gpLimMlmAuthReq->authType;
+
 			/* Prepare & send Authentication frame */
-			auth_frame.authAlgoNumber =
-			    (uint8_t) mac_ctx->lim.gpLimMlmAuthReq->authType;
+			if (session_entry->sae_pmk_cached &&
+			    auth_type == eSIR_AUTH_TYPE_SAE)
+				auth_frame.authAlgoNumber = eSIR_OPEN_SYSTEM;
+			else
+				auth_frame.authAlgoNumber = (uint8_t)auth_type;
+
 			auth_frame.authTransactionSeqNumber =
 						SIR_MAC_AUTH_FRAME_1;
 			auth_frame.authStatusCode = 0;
 			pe_debug("Retry Auth");
 			mac_ctx->auth_ack_status = LIM_AUTH_ACK_NOT_RCD;
 			lim_increase_fils_sequence_number(session_entry);
-			lim_send_auth_mgmt_frame(mac_ctx,
-				&auth_frame,
+			lim_send_auth_mgmt_frame(mac_ctx, &auth_frame,
 				mac_ctx->lim.gpLimMlmAuthReq->peerMacAddr,
 				LIM_NO_WEP_IN_FC, session_entry);
 		}

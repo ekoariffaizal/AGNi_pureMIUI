@@ -2306,6 +2306,8 @@ static void ol_txrx_pdev_pre_detach(struct cdp_pdev *ppdev, int force)
 	OL_RX_REORDER_TRACE_DETACH(pdev);
 	OL_RX_PN_TRACE_DETACH(pdev);
 
+	htt_pktlogmod_exit(pdev);
+
 	/*
 	 * WDI event detach
 	 */
@@ -2346,8 +2348,6 @@ static void ol_txrx_pdev_detach(struct cdp_pdev *ppdev, int force)
 			   "NULL pdev passed to %s\n", __func__);
 		return;
 	}
-
-	htt_pktlogmod_exit(pdev);
 
 	qdf_spin_lock_bh(&pdev->req_list_spinlock);
 	if (pdev->req_list_depth > 0)
@@ -3866,9 +3866,8 @@ int ol_txrx_peer_release_ref(ol_txrx_peer_handle peer,
 				  debug_id,
 				  qdf_atomic_read(&peer->access_list[debug_id]),
 				  peer, rc,
-				  qdf_atomic_read(&peer->fw_create_pending)
-									== 1 ?
-				  "(No Maps received)" : "");
+				  qdf_atomic_read(&peer->fw_create_pending) ==
+				  1 ? "(No Maps received)" : "");
 
 		ol_txrx_peer_tx_queue_free(pdev, peer);
 
@@ -3892,9 +3891,7 @@ int ol_txrx_peer_release_ref(ol_txrx_peer_handle peer,
 		qdf_spin_unlock_bh(&pdev->peer_ref_mutex);
 		if (!ref_silent)
 			ol_txrx_info_high("[%d][%d]: ref delete peer %pK ref_cnt -> %d",
-					  debug_id,
-					  access_list,
-					  peer, rc);
+					  debug_id, access_list, peer, rc);
 	}
 	return rc;
 ERR_STATE:
