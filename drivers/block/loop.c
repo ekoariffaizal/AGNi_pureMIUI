@@ -2085,7 +2085,11 @@ static int __init loop_init(void)
 		nr = max_loop;
 		range = max_loop << part_shift;
 	} else {
-		nr = (get_android_version() <= 9) ? 8 : 16;
+#ifdef CONFIG_AGNI_ANDROID_9
+		nr = 8;
+#else
+		nr = 16;
+#endif
 		range = 1UL << MINORBITS;
 	}
 
