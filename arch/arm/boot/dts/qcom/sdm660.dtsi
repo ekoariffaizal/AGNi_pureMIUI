@@ -400,18 +400,13 @@
 			alloc-ranges = <0 0x00000000 0 0xffffffff>;
 			reusable;
 			alignment = <0 0x400000>;
-			size = <0 0x8000000>;
+			size = <0 0x2c00000>;
 			linux,cma-default;
 		};
 
 		cont_splash_mem: splash_region@9d400000 {
-			reg = <0x0 0x9d400000 0x0 0x23ff000>;
+			reg = <0x0 0x9d400000 0x0 0x02400000>;
 			label = "cont_splash_mem";
-		};
-
-		dfps_data_mem: dfps_data_mem@0x9f7ff000 {
-		       reg = <0 0x9f800000 0 0x00001000>;
-		       label = "dfps_data_mem";
 		};
 
 		pstore_reserve_mem: pstore_reserve_mem_region@0 {
@@ -657,7 +652,7 @@
 			compatible = "qcom,memshare-peripheral";
 			qcom,peripheral-size = <0x0>;
 			qcom,client-id = <1>;
-			qcom,allocate-on-request;
+			qcom,allocate-boot-time;
 			label = "modem";
 		};
 	};
