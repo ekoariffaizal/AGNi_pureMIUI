@@ -265,7 +265,7 @@ endif
 # builds. Other OEMs are also protected using the TARGET_BUILD_VARIANT
 # config.
 ifneq ($(TARGET_BUILD_VARIANT),user)
-	CONFIG_FEATURE_PKTLOG := y
+#	CONFIG_FEATURE_PKTLOG := y
 endif
 
 #enable spectral scan feature
@@ -1329,7 +1329,7 @@ endif
 
 ifneq ($(CONFIG_HIF_USB), 1)
 ifeq ($(BUILD_DEBUG_VERSION), 1)
-CDEFINES += -DWLAN_LOGGING_SOCK_SVC_ENABLE
+#CDEFINES += -DWLAN_LOGGING_SOCK_SVC_ENABLE
 endif
 endif
 
@@ -1374,7 +1374,7 @@ CDEFINES +=	-DWLAN_FEATURE_FASTPATH
 endif
 
 ifeq ($(CONFIG_FEATURE_PKTLOG), y)
-CDEFINES +=     -DFEATURE_PKTLOG
+#CDEFINES +=     -DFEATURE_PKTLOG
 endif
 
 ifneq ($(CONFIG_ARCH_SDX20), y)
@@ -1414,7 +1414,7 @@ CDEFINES +=	-DWLAN_DEBUG \
 		-DLIM_TRACE_RECORD \
 		-DSME_TRACE_RECORD \
 		-DHDD_TRACE_RECORD \
-		-DPE_DEBUG_LOGW \
+#		-DPE_DEBUG_LOGW \
 		-DPE_DEBUG_LOGE
 endif
 
@@ -1523,8 +1523,8 @@ CDEFINES += -DWLAN_FEATURE_LPSS
 endif
 
 ifneq ($(TARGET_BUILD_VARIANT),user)
-CDEFINES += -DDESC_DUP_DETECT_DEBUG
-CDEFINES += -DDEBUG_RX_RING_BUFFER
+#CDEFINES += -DDESC_DUP_DETECT_DEBUG
+#CDEFINES += -DDEBUG_RX_RING_BUFFER
 endif
 
 ifeq ($(PANIC_ON_BUG),1)
@@ -1595,7 +1595,7 @@ CDEFINES += -DCONFIG_HL_SUPPORT \
             -DCONFIG_ATH_PROCFS_DIAG_SUPPORT \
             -DFEATURE_HL_GROUP_CREDIT_FLOW_CONTROL \
             -DHIF_MBOX_SLEEP_WAR \
-            -DDEBUG_HL_LOGGING \
+#            -DDEBUG_HL_LOGGING \
             -DQCA_BAD_PEER_TX_FLOW_CL \
             -DCONFIG_TX_DESC_HI_PRIO_RESERVE \
             -DCONFIG_PER_VDEV_TX_DESC_POOL \
@@ -1997,25 +1997,25 @@ CDEFINES += -DWLAN_HDD_ADAPTER_MAGIC=$(WLAN_HDD_ADAPTER_MAGIC)
 endif
 
 # inject some build related information
-ifeq ($(CONFIG_BUILD_TAG), y)
-CLD_CHECKOUT = $(shell cd "$(WLAN_ROOT)" && \
-	git reflog | grep -vm1 cherry-pick | grep -oE ^[0-f]+)
-CLD_IDS = $(shell cd "$(WLAN_ROOT)" && \
-	git log $(CLD_CHECKOUT)~..HEAD | \
-		sed -nE 's/^\s*Change-Id: (I[0-f]{10})[0-f]{30}\s*$$/\1/p' | \
-		paste -sd "," -)
-
-CMN_CHECKOUT = $(shell cd "$(WLAN_COMMON_INC)" && \
-	git reflog | grep -vm1 cherry-pick | grep -oE ^[0-f]+)
-CMN_IDS = $(shell cd "$(WLAN_COMMON_INC)" && \
-	git log $(CMN_CHECKOUT)~..HEAD | \
-		sed -nE 's/^\s*Change-Id: (I[0-f]{10})[0-f]{30}\s*$$/\1/p' | \
-		paste -sd "," -)
-
-TIMESTAMP = $(shell date -u +'%Y-%m-%dT%H:%M:%SZ')
-BUILD_TAG = "$(TIMESTAMP); cld:$(CLD_IDS); cmn:$(CMN_IDS);"
-CDEFINES += -DBUILD_TAG=\"$(BUILD_TAG)\"
-endif
+#ifeq ($(CONFIG_BUILD_TAG), y)
+#CLD_CHECKOUT = $(shell cd "$(WLAN_ROOT)" && \
+#	git reflog | grep -vm1 cherry-pick | grep -oE ^[0-f]+)
+#CLD_IDS = $(shell cd "$(WLAN_ROOT)" && \
+#	git log $(CLD_CHECKOUT)~..HEAD | \
+#		sed -nE 's/^\s*Change-Id: (I[0-f]{10})[0-f]{30}\s*$$/\1/p' | \
+#		paste -sd "," -)
+#
+#CMN_CHECKOUT = $(shell cd "$(WLAN_COMMON_INC)" && \
+#	git reflog | grep -vm1 cherry-pick | grep -oE ^[0-f]+)
+#CMN_IDS = $(shell cd "$(WLAN_COMMON_INC)" && \
+#	git log $(CMN_CHECKOUT)~..HEAD | \
+#		sed -nE 's/^\s*Change-Id: (I[0-f]{10})[0-f]{30}\s*$$/\1/p' | \
+#		paste -sd "," -)
+#
+#TIMESTAMP = $(shell date -u +'%Y-%m-%dT%H:%M:%SZ')
+#BUILD_TAG = "$(TIMESTAMP); cld:$(CLD_IDS); cmn:$(CMN_IDS);"
+#CDEFINES += -DBUILD_TAG=\"$(BUILD_TAG)\"
+#endif
 
 # Module information used by KBuild framework
 obj-$(CONFIG_QCA_CLD_WLAN) += $(MODNAME).o
